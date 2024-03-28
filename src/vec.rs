@@ -3,9 +3,10 @@ use std::ops::{Add, AddAssign};
 use std::ops::{Sub, SubAssign};
 use std::ops::{Mul, MulAssign};
 use std::ops::{Div, DivAssign};
-
+use std::ops::Range;
 use std::fmt;
 use std::fmt::Display;
+use rand::Rng;
 
 #[derive(Clone, Copy)]
 pub struct Vec3 {
@@ -29,7 +30,42 @@ impl Vec3 {
     }
 
 
-    // --------- UTILITY FUNCTIONS -------------------------------------------------------------------------
+    // random constructors
+    pub fn random(r: Range<f64>) -> Vec3 {
+        let mut rng = rand::thread_rng();
+
+        Vec3 {
+            e: [rng.gen_range(r.clone()), rng.gen_range(r.clone()), rng.gen_range(r.clone())]
+        }
+    }
+
+
+    // use rejection to get point within sphere
+    pub fn random_in_unit_sphere() -> Vec3 {
+        loop {
+            let v = Vec3::random(-1.0..1.0);
+            if v.length() < 1.0 {
+                return v;
+            }
+        }
+    }
+
+
+    // --------- Reflection/Refraction Utilities ---------------------------------------------
+    pub fn reflect(self, n: Vec3) -> Vec3 {
+        self - 2.0 * self.dot(n) * n
+    }
+
+
+    pub fn refract(self, n: Vec3, etai_over_etat: f64) -> Vec3 {
+        let cos_theta = ((-1.0) * self).dot(n).min(1.0);
+        let r_out_perp = etai_over_etat * (self + cos_theta * n);
+        let r_out_parallel = -(1.0 - r_out_perp.length().powi(2)).abs().sqrt() * n;
+        r_out_perp + r_out_parallel
+    }
+
+
+    // --------- UTILITY FUNCTIONS -----------------------------------------------------------
     pub fn x(self) -> f64 {
         self[0]
     }
@@ -64,11 +100,20 @@ impl Vec3 {
         self / self.length()
     }
 
+
+    /// check if vector *almost* all zero components
+    pub fn near_zero(self) -> bool {
+        const EPS: f64 = 1.0e-8;
+
+        self[0].abs( ) < EPS && self[1].abs() < EPS && self[2].abs() < EPS
+    }
+
+
     // ----------- COLOR UTILITY FUNCTIONS ----------------------------------------------------------------
     pub fn format_color(self, samples_per_pixel: u64) -> String {
-        let ir = (256.0 * (self[0] / (samples_per_pixel as f64)).clamp(0.0, 0.999)) as u64;
-        let ig = (256.0 * (self[1] / (samples_per_pixel as f64)).clamp(0.0, 0.999)) as u64;
-        let ib = (256.0 * (self[2] / (samples_per_pixel as f64)).clamp(0.0, 0.999)) as u64;
+        let ir = (256.0 * (self[0] / (samples_per_pixel as f64)).sqrt().clamp(0.0, 0.999)) as u64;
+        let ig = (256.0 * (self[1] / (samples_per_pixel as f64)).sqrt().clamp(0.0, 0.999)) as u64;
+        let ib = (256.0 * (self[2] / (samples_per_pixel as f64)).sqrt().clamp(0.0, 0.999)) as u64;
 
         format!("{} {} {}", ir, ig, ib)
     }
@@ -155,7 +200,27 @@ impl MulAssign<f64> for Vec3 {
     fn mul_assign(&mut self, other: f64) -> () {
         *self = Vec3 {
             e: [self[0] * other, self[1] * other, self[2] * other]
-        };
+        }
+    }
+}
+
+
+/// element-wise multiplication
+impl Mul<Vec3> for Vec3 {
+    type Output = Vec3;
+
+    fn mul(self, other: Vec3) -> Vec3 {
+        Vec3 {
+            e: [self[0] * other[0], self[1] * other[1], self[2] * other[2]]
+        }
+    }
+}
+
+impl MulAssign<Vec3> for Vec3 {
+    fn mul_assign(&mut self, other: Vec3) -> () {
+        *self = Vec3 {
+            e: [self[0] * other[0], self[1] * other[1], self[2] * other[2]]
+        }
     }
 }
 
@@ -168,6 +233,7 @@ impl Mul<Vec3> for f64 {
         }
     }
 }
+
 
 impl Div<f64> for Vec3 {
     type Output = Vec3;

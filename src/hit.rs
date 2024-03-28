@@ -1,12 +1,15 @@
 use super::vec::{Vec3, Point3};
 use super::ray::Ray;
+use super::material::Scatter;
+use std::rc::Rc;
 
 
 /// A struct storing data for ray-object intersection
 pub struct HitRecord{
-    pub p: Point3,      // intersection point
-    pub normal: Vec3,   // outward surface normal
-    pub t: f64,         // intersection "time"
+    pub p: Point3,             // intersection point
+    pub normal: Vec3,          // outward surface normal
+    pub mat: Rc<dyn Scatter>,  // Many records can hit the same object, so we need a reference counter. Make it work for any struct implementing Scatter trait
+    pub t: f64,                // intersection "time"
     pub front_face: bool,
 }
 
