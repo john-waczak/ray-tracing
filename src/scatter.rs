@@ -1,4 +1,6 @@
 use super::vec::{Vec3, Point3, Color};
+use super::ray::Ray;
+use super::hit::HitRecord;
 
 
 pub struct Lambertian {

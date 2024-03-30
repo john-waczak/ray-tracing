@@ -1,18 +1,18 @@
-use super::vec::{Vec3, Point3};
-use super::ray::Ray;
 use super::material::Scatter;
-use std::rc::Rc;
+use super::ray::Ray;
+use super::vec::{Point3, Vec3};
 
+// use std::rc::Rc;
+use std::sync::Arc;
 
 /// A struct storing data for ray-object intersection
-pub struct HitRecord{
-    pub p: Point3,             // intersection point
-    pub normal: Vec3,          // outward surface normal
-    pub mat: Rc<dyn Scatter>,  // Many records can hit the same object, so we need a reference counter. Make it work for any struct implementing Scatter trait
-    pub t: f64,                // intersection "time"
+pub struct HitRecord {
+    pub p: Point3,            // intersection point
+    pub normal: Vec3,         // outward surface normal
+    pub mat: Arc<dyn Scatter>, // Many records can hit the same object, so we need a reference counter. Make it work for any struct implementing Scatter trait
+    pub t: f64,               // intersection "time"
     pub front_face: bool,
 }
-
 
 /// implementation for HitRecord
 impl HitRecord {
@@ -26,9 +26,8 @@ impl HitRecord {
     }
 }
 
-
 /// A trait for all "hitabale" objects
-pub trait Hit {
+pub trait Hit : Send + Sync {
     fn hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord>;
 }
 
@@ -50,4 +49,3 @@ impl Hit for World {
         tmp_rec
     }
 }
-

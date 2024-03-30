@@ -1,29 +1,23 @@
-use super::vec::{Vec3, Point3, Color};
-use super::ray::Ray;
 use super::hit::HitRecord;
+use super::ray::Ray;
+use super::vec::{Color, Vec3};
 use rand::Rng;
 
-pub trait Scatter {
+pub trait Scatter : Send + Sync {
     fn scatter(&self, r_in: &Ray, rec: &HitRecord) -> Option<(Color, Ray)>;
 }
-
-
-
 
 // ---------------- LAMBERTIAN --------------------------------------------------------------
 
 pub struct Lambertian {
-    albedo: Color
+    albedo: Color,
 }
 
 impl Lambertian {
     pub fn new(a: Color) -> Lambertian {
-        Lambertian {
-            albedo: a
-        }
+        Lambertian { albedo: a }
     }
 }
-
 
 impl Scatter for Lambertian {
     fn scatter(&self, r_in: &Ray, rec: &HitRecord) -> Option<(Color, Ray)> {
@@ -43,7 +37,6 @@ impl Scatter for Lambertian {
     }
 }
 
-
 // ---------------- METAL -------------------------------------------------------------------
 
 pub struct Metal {
@@ -53,10 +46,7 @@ pub struct Metal {
 
 impl Metal {
     pub fn new(a: Color, f: f64) -> Metal {
-        Metal {
-            albedo: a,
-            fuzz: f,
-        }
+        Metal { albedo: a, fuzz: f }
     }
 }
 
@@ -73,20 +63,17 @@ impl Scatter for Metal {
     }
 }
 
-
 // --------------- DIELECTRIC ---------------------------------------------------------------
 pub struct Dielectric {
-    ir: f64 // refractive index
+    ir: f64, // refractive index
 }
-
 
 impl Dielectric {
     pub fn new(index_of_refraction: f64) -> Dielectric {
         Dielectric {
-            ir: index_of_refraction
+            ir: index_of_refraction,
         }
     }
-
 
     fn reflectance(cosine: f64, ref_idx: f64) -> f64 {
         // use Schlick's approximation for reflectance

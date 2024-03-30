@@ -1,17 +1,13 @@
-use super::vec::{Vec3, Point3};
+use super::vec::{Point3, Vec3};
 
 pub struct Ray {
     orig: Point3,
     dir: Vec3,
 }
 
-
 impl Ray {
     pub fn new(orig: Point3, dir: Vec3) -> Ray {
-        Ray {
-            orig,
-            dir,
-        }
+        Ray { orig, dir }
     }
 
     pub fn origin(&self) -> Point3 {

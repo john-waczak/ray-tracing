@@ -1,44 +1,39 @@
-use std::ops::{Index, IndexMut};
-use std::ops::{Add, AddAssign};
-use std::ops::{Sub, SubAssign};
-use std::ops::{Mul, MulAssign};
-use std::ops::{Div, DivAssign};
-use std::ops::Range;
+use rand::Rng;
 use std::fmt;
 use std::fmt::Display;
-use rand::Rng;
+use std::ops::Range;
+use std::ops::{Add, AddAssign};
+use std::ops::{Div, DivAssign};
+use std::ops::{Index, IndexMut};
+use std::ops::{Mul, MulAssign};
+use std::ops::{Sub, SubAssign};
 
 #[derive(Clone, Copy)]
 pub struct Vec3 {
-    e: [f64; 3]  // a float64 vector with 3 elements
+    e: [f64; 3], // a float64 vector with 3 elements
 }
-
 
 // aliase the Vec3 to make Points and Colors
 pub type Point3 = Vec3;
 pub type Color = Vec3;
 
-
-
-
-
 impl Vec3 {
     pub fn new(e0: f64, e1: f64, e2: f64) -> Vec3 {
-        Vec3 {
-            e: [e0, e1, e2]
-        }
+        Vec3 { e: [e0, e1, e2] }
     }
-
 
     // random constructors
     pub fn random(r: Range<f64>) -> Vec3 {
         let mut rng = rand::thread_rng();
 
         Vec3 {
-            e: [rng.gen_range(r.clone()), rng.gen_range(r.clone()), rng.gen_range(r.clone())]
+            e: [
+                rng.gen_range(r.clone()),
+                rng.gen_range(r.clone()),
+                rng.gen_range(r.clone()),
+            ],
         }
     }
-
 
     // use rejection to get point within sphere
     pub fn random_in_unit_sphere() -> Vec3 {
@@ -50,12 +45,21 @@ impl Vec3 {
         }
     }
 
+    pub fn random_in_unit_disk() -> Vec3 {
+        let mut rng = rand::thread_rng();
+
+        loop {
+            let p = Vec3::new(rng.gen_range(-1.0..1.0), rng.gen_range(-1.0..1.0), 0.0);
+            if p.length() < 1.0 {
+                return p;
+            }
+        }
+    }
 
     // --------- Reflection/Refraction Utilities ---------------------------------------------
     pub fn reflect(self, n: Vec3) -> Vec3 {
         self - 2.0 * self.dot(n) * n
     }
-
 
     pub fn refract(self, n: Vec3, etai_over_etat: f64) -> Vec3 {
         let cos_theta = ((-1.0) * self).dot(n).min(1.0);
@@ -63,7 +67,6 @@ impl Vec3 {
         let r_out_parallel = -(1.0 - r_out_perp.length().powi(2)).abs().sqrt() * n;
         r_out_perp + r_out_parallel
     }
-
 
     // --------- UTILITY FUNCTIONS -----------------------------------------------------------
     pub fn x(self) -> f64 {
@@ -91,8 +94,8 @@ impl Vec3 {
             e: [
                 self[1] * other[2] - self[2] * other[1],
                 self[2] * other[0] - self[0] * other[2],
-                self[0] * other[1] - self[1] * other[0]
-            ]
+                self[0] * other[1] - self[1] * other[0],
+            ],
         }
     }
 
@@ -100,34 +103,37 @@ impl Vec3 {
         self / self.length()
     }
 
-
     /// check if vector *almost* all zero components
     pub fn near_zero(self) -> bool {
         const EPS: f64 = 1.0e-8;
 
-        self[0].abs( ) < EPS && self[1].abs() < EPS && self[2].abs() < EPS
+        self[0].abs() < EPS && self[1].abs() < EPS && self[2].abs() < EPS
     }
-
 
     // ----------- COLOR UTILITY FUNCTIONS ----------------------------------------------------------------
     pub fn format_color(self, samples_per_pixel: u64) -> String {
-        let ir = (256.0 * (self[0] / (samples_per_pixel as f64)).sqrt().clamp(0.0, 0.999)) as u64;
-        let ig = (256.0 * (self[1] / (samples_per_pixel as f64)).sqrt().clamp(0.0, 0.999)) as u64;
-        let ib = (256.0 * (self[2] / (samples_per_pixel as f64)).sqrt().clamp(0.0, 0.999)) as u64;
+        let ir = (256.0
+            * (self[0] / (samples_per_pixel as f64))
+                .sqrt()
+                .clamp(0.0, 0.999)) as u64;
+        let ig = (256.0
+            * (self[1] / (samples_per_pixel as f64))
+                .sqrt()
+                .clamp(0.0, 0.999)) as u64;
+        let ib = (256.0
+            * (self[2] / (samples_per_pixel as f64))
+                .sqrt()
+                .clamp(0.0, 0.999)) as u64;
 
         format!("{} {} {}", ir, ig, ib)
     }
-
-
 }
-
 
 impl Display for Vec3 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "({}, {}, {})", self[0], self[1], self[2])
     }
 }
-
 
 // implement indexing (immutable and mutable)
 impl Index<usize> for Vec3 {
@@ -138,13 +144,11 @@ impl Index<usize> for Vec3 {
     }
 }
 
-
 impl IndexMut<usize> for Vec3 {
     fn index_mut(&mut self, index: usize) -> &mut f64 {
         &mut self.e[index]
     }
 }
-
 
 // implement vector addition
 impl Add for Vec3 {
@@ -152,36 +156,34 @@ impl Add for Vec3 {
 
     fn add(self, other: Vec3) -> Vec3 {
         Vec3 {
-            e: [self[0] + other[0], self[1] + other[1], self[2] + other[2]]
+            e: [self[0] + other[0], self[1] + other[1], self[2] + other[2]],
         }
     }
 }
 
 impl AddAssign for Vec3 {
-    fn add_assign(&mut self, other: Vec3) -> () {
+    fn add_assign(&mut self, other: Vec3) {
         // dereference and update
         *self = Vec3 {
-            e: [self[0] + other[0], self[1] + other[1], self[2] + other[2]]
+            e: [self[0] + other[0], self[1] + other[1], self[2] + other[2]],
         }
     }
 }
-
-
 
 impl Sub for Vec3 {
     type Output = Vec3;
 
     fn sub(self, other: Vec3) -> Vec3 {
         Vec3 {
-            e: [self[0] - other[0], self[1] - other[1], self[2] - other[2]]
+            e: [self[0] - other[0], self[1] - other[1], self[2] - other[2]],
         }
     }
 }
 
 impl SubAssign for Vec3 {
-    fn sub_assign(&mut self, other: Vec3) -> () {
+    fn sub_assign(&mut self, other: Vec3) {
         *self = Vec3 {
-            e: [self[0] - other[0], self[1] - other[1], self[2] - other[2]]
+            e: [self[0] - other[0], self[1] - other[1], self[2] - other[2]],
         };
     }
 }
@@ -191,19 +193,18 @@ impl Mul<f64> for Vec3 {
 
     fn mul(self, other: f64) -> Vec3 {
         Vec3 {
-            e: [self[0] * other, self[1] * other, self[2] * other]
+            e: [self[0] * other, self[1] * other, self[2] * other],
         }
     }
 }
 
 impl MulAssign<f64> for Vec3 {
-    fn mul_assign(&mut self, other: f64) -> () {
+    fn mul_assign(&mut self, other: f64) {
         *self = Vec3 {
-            e: [self[0] * other, self[1] * other, self[2] * other]
+            e: [self[0] * other, self[1] * other, self[2] * other],
         }
     }
 }
-
 
 /// element-wise multiplication
 impl Mul<Vec3> for Vec3 {
@@ -211,15 +212,15 @@ impl Mul<Vec3> for Vec3 {
 
     fn mul(self, other: Vec3) -> Vec3 {
         Vec3 {
-            e: [self[0] * other[0], self[1] * other[1], self[2] * other[2]]
+            e: [self[0] * other[0], self[1] * other[1], self[2] * other[2]],
         }
     }
 }
 
 impl MulAssign<Vec3> for Vec3 {
-    fn mul_assign(&mut self, other: Vec3) -> () {
+    fn mul_assign(&mut self, other: Vec3) {
         *self = Vec3 {
-            e: [self[0] * other[0], self[1] * other[1], self[2] * other[2]]
+            e: [self[0] * other[0], self[1] * other[1], self[2] * other[2]],
         }
     }
 }
@@ -229,34 +230,28 @@ impl Mul<Vec3> for f64 {
 
     fn mul(self, other: Vec3) -> Vec3 {
         Vec3 {
-            e: [self * other[0], self * other[1], self * other[2]]
+            e: [self * other[0], self * other[1], self * other[2]],
         }
     }
 }
-
 
 impl Div<f64> for Vec3 {
     type Output = Vec3;
 
     fn div(self, other: f64) -> Vec3 {
         Vec3 {
-            e: [self[0] / other, self[1] / other, self[2] / other]
+            e: [self[0] / other, self[1] / other, self[2] / other],
         }
     }
 }
 
 impl DivAssign<f64> for Vec3 {
-    fn div_assign(&mut self, other: f64) -> () {
+    fn div_assign(&mut self, other: f64) {
         *self = Vec3 {
-            e: [self[0] / other, self[1] / other, self[2] / other]
+            e: [self[0] / other, self[1] / other, self[2] / other],
         };
     }
 }
-
-
-
-
-
 
 #[cfg(test)]
 mod vec_tests {
